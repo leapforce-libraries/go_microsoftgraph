@@ -1,19 +1,15 @@
 package go_microsoftgraph
 
-// GoogleError stores general google API error response
+// ErrorResponse stores a general Microsoft Graph API error response
 //
 type ErrorResponse struct {
 	Error struct {
-		Code    int    `json:"code"`
-		Message string `json:"message"`
-		Status  string `json:"status"`
-		Details []struct {
-			Type   string `json:"@type"`
-			Errors []struct {
-				ErrorCode map[string]string `json:"errorCode"`
-				Message   string            `json:"message"`
-			} `json:"errors"`
-			RequestId string `json:"requestId"`
-		} `json:"details"`
+		Code       string `json:"code"`
+		Message    string `json:"message"`
+		InnerError struct {
+			Date            string `json:"date"`
+			RequestId       string `json:"request-id"`
+			ClientRequestId string `json:"client-request-id"`
+		} `json:"innerError"`
 	} `json:"error"`
 }

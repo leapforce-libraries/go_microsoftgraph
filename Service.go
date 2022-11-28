@@ -11,26 +11,28 @@ import (
 	"time"
 )
 
+const (
+	apiName            string = "MicrosoftGraph"
+	apiUrl             string = "Me.go"
+	authUrl            string = "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize"
+	tokenUrl           string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
+	tokenHttpMethod    string = http.MethodPost
+	defaultRedirectUrl string = "http://localhost:8080/oauth/redirect"
+	dateTimeLayout     string = "2006-01-02T15:04:05Z"
+)
+
 // Service stores GoogleService configuration
 //
 type Service struct {
-	apiName       string
 	clientId      string
-	tenantId      string
+	clientSecret  string
 	oAuth2Service *oauth2.Service
 	errorResponse *ErrorResponse
 }
 
-const (
-	authUrl            string = "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize"
-	tokenUrl           string = "https://oauth2.googleapis.com/token"
-	tokenHttpMethod    string = http.MethodPost
-	defaultRedirectUrl string = "http://localhost:8080/oauth/redirect"
-)
-
 type ServiceConfig struct {
-	ApiName       string
 	ClientId      string
+	ClientSecret  string
 	TenantId      string
 	TokenSource   tokensource.TokenSource
 	RedirectUrl   *string
@@ -57,9 +59,10 @@ func NewService(cfg *ServiceConfig) (*Service, *errortools.Error) {
 
 	oauth2ServiceConfig := oauth2.ServiceConfig{
 		ClientId:        cfg.ClientId,
+		ClientSecret:    cfg.ClientSecret,
 		RedirectUrl:     redirectUrl,
 		AuthUrl:         fmt.Sprintf(authUrl, cfg.TenantId),
-		TokenUrl:        tokenUrl,
+		TokenUrl:        fmt.Sprintf(tokenUrl, cfg.TenantId),
 		RefreshMargin:   cfg.RefreshMargin,
 		TokenHttpMethod: tokenHttpMethod,
 		TokenSource:     cfg.TokenSource,
@@ -70,7 +73,6 @@ func NewService(cfg *ServiceConfig) (*Service, *errortools.Error) {
 	}
 
 	return &Service{
-		apiName:       cfg.ApiName,
 		clientId:      cfg.ClientId,
 		oAuth2Service: oauth2Service,
 	}, nil
@@ -95,8 +97,8 @@ func (service *Service) HttpRequest(requestConfig *go_http.RequestConfig) (*http
 	return request, response, e
 }
 
-func (service *Service) AuthorizeUrl(scope string, accessType *string, prompt *string, state *string) string {
-	return service.oAuth2Service.AuthorizeUrl(scope, accessType, prompt, state)
+func (service *Service) AuthorizeUrl(scope string) string {
+	return service.oAuth2Service.AuthorizeUrl(scope, nil, nil, nil)
 }
 
 func (service *Service) ValidateToken() (*go_token.Token, *errortools.Error) {
@@ -107,8 +109,12 @@ func (service *Service) GetTokenFromCode(r *http.Request) *errortools.Error {
 	return service.oAuth2Service.GetTokenFromCode(r, nil)
 }
 
+func (service *Service) url(path string) string {
+	return fmt.Sprintf("%s/%s", apiUrl, path)
+}
+
 func (service *Service) ApiName() string {
-	return service.apiName
+	return apiName
 }
 
 func (service *Service) ApiKey() string {
