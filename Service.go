@@ -2,6 +2,7 @@ package go_microsoftgraph
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
 	oauth2 "github.com/leapforce-libraries/go_oauth2"
@@ -98,7 +99,10 @@ func (service *Service) HttpRequest(requestConfig *go_http.RequestConfig) (*http
 }
 
 func (service *Service) AuthorizeUrl(scope string) string {
-	return service.oAuth2Service.AuthorizeUrl(scope, nil, nil, nil)
+	g := uuid.NewGen()
+	guid, _ := g.NewV1()
+	state := guid.String()
+	return service.oAuth2Service.AuthorizeUrl(scope, nil, nil, &state)
 }
 
 func (service *Service) ValidateToken() (*go_token.Token, *errortools.Error) {
