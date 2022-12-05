@@ -14,7 +14,7 @@ import (
 
 const (
 	apiName            string = "MicrosoftGraph"
-	apiUrl             string = "Me.go"
+	apiUrl             string = "https://graph.microsoft.com/v1.0"
 	authUrl            string = "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize"
 	tokenUrl           string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
 	tokenHttpMethod    string = http.MethodPost

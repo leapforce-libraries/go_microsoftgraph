@@ -110,9 +110,10 @@ func (service *Service) ListCalendarViewBookingAppointments(cfg *ListCalendarVie
 
 	requestConfig := go_http.RequestConfig{
 		Method:        http.MethodGet,
-		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/calendarView", cfg.BookingBusinessId)),
+		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/calendarView?%s", cfg.BookingBusinessId, values.Encode())),
 		ResponseModel: &response,
 	}
+	fmt.Println(requestConfig.Url)
 	_, _, e := service.HttpRequest(&requestConfig)
 	if e != nil {
 		return nil, e
