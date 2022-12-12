@@ -4,6 +4,7 @@ import (
 	"fmt"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
+	m_types "github.com/leapforce-libraries/go_microsoftgraph/types"
 	"net/http"
 	"net/url"
 	"time"
@@ -34,13 +35,24 @@ type BookingAppointment struct {
 }
 
 type Customer struct {
-	CustomerId   string   `json:"customerId"`
-	Name         string   `json:"name"`
-	EmailAddress *string  `json:"emailAddress"`
-	Phone        *string  `json:"phone"`
-	Notes        *string  `json:"notes"`
-	Location     Location `json:"location"`
-	TimeZone     *string  `json:"timeZone"`
+	CustomerId            string                  `json:"customerId"`
+	Name                  string                  `json:"name"`
+	EmailAddress          string                  `json:"emailAddress"`
+	Phone                 *string                 `json:"phone"`
+	Notes                 *string                 `json:"notes"`
+	Location              Location                `json:"location"`
+	TimeZone              *string                 `json:"timeZone"`
+	CustomQuestionAnswers *[]CustomQuestionAnswer `json:"customQuestionAnswers"`
+}
+
+type CustomQuestionAnswer struct {
+	QuestionId      string        `json:"questionId"`
+	Question        string        `json:"question"`
+	Answer          string        `json:"answer"`
+	AnswerInputType string        `json:"answerInputType"`
+	AnswerOptions   []interface{} `json:"answerOptions"`
+	IsRequired      bool          `json:"isRequired"`
+	SelectedOptions []interface{} `json:"selectedOptions"`
 }
 
 type Location struct {
@@ -67,22 +79,49 @@ type Location struct {
 }
 
 type DateTime struct {
-	DateTime string `json:"dateTime"`
-	TimeZone string `json:"timeZone"`
+	DateTime m_types.DateTimeString `json:"dateTime"`
+	TimeZone string                 `json:"timeZone"`
+}
+
+type GetBookingAppointmentConfig struct {
+	BookingBusinessId    string
+	BookingAppointmentId string
+}
+
+func (service *Service) GetBookingAppointment(cfg *GetBookingAppointmentConfig) (*BookingAppointment, *errortools.Error) {
+	var bookingAppointment BookingAppointment
+
+	requestConfig := go_http.RequestConfig{
+		Method:        http.MethodGet,
+		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/appointments/%s", cfg.BookingBusinessId, cfg.BookingAppointmentId)),
+		ResponseModel: &bookingAppointment,
+	}
+	_, _, e := service.HttpRequest(&requestConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	return &bookingAppointment, nil
 }
 
 type ListBookingAppointmentsConfig struct {
 	BookingBusinessId string
+	Filter            *string
 }
 
 func (service *Service) ListBookingAppointments(cfg *ListBookingAppointmentsConfig) (*[]BookingAppointment, *errortools.Error) {
+	var values = url.Values{}
+	if cfg.Filter != nil {
+		values.Set("$filter", *cfg.Filter)
+	}
+
 	var response = struct {
 		Value []BookingAppointment `json:"value"`
 	}{}
 
 	requestConfig := go_http.RequestConfig{
 		Method:        http.MethodGet,
-		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/appointments", cfg.BookingBusinessId)),
+		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/appointments?%s", cfg.BookingBusinessId, values.Encode())),
 		ResponseModel: &response,
 	}
 	_, _, e := service.HttpRequest(&requestConfig)
@@ -97,12 +136,16 @@ type ListCalendarViewBookingAppointmentsConfig struct {
 	BookingBusinessId string
 	Start             time.Time
 	End               time.Time
+	Filter            *string
 }
 
 func (service *Service) ListCalendarViewBookingAppointments(cfg *ListCalendarViewBookingAppointmentsConfig) (*[]BookingAppointment, *errortools.Error) {
 	var values = url.Values{}
 	values.Set("start", cfg.Start.Format(dateTimeLayout))
 	values.Set("end", cfg.End.Format(dateTimeLayout))
+	if cfg.Filter != nil {
+		values.Set("$filter", *cfg.Filter)
+	}
 
 	var response = struct {
 		Value []BookingAppointment `json:"value"`
@@ -113,7 +156,6 @@ func (service *Service) ListCalendarViewBookingAppointments(cfg *ListCalendarVie
 		Url:           service.url(fmt.Sprintf("solutions/bookingBusinesses/%s/calendarView?%s", cfg.BookingBusinessId, values.Encode())),
 		ResponseModel: &response,
 	}
-	fmt.Println(requestConfig.Url)
 	_, _, e := service.HttpRequest(&requestConfig)
 	if e != nil {
 		return nil, e
