@@ -107,12 +107,16 @@ func (service *Service) GetBookingAppointment(cfg *GetBookingAppointmentConfig) 
 type ListBookingAppointmentsConfig struct {
 	BookingBusinessId string
 	Filter            *string
+	Select            *string
 }
 
 func (service *Service) ListBookingAppointments(cfg *ListBookingAppointmentsConfig) (*[]BookingAppointment, *errortools.Error) {
 	var values = url.Values{}
 	if cfg.Filter != nil {
 		values.Set("$filter", *cfg.Filter)
+	}
+	if cfg.Select != nil {
+		values.Set("$select", *cfg.Select)
 	}
 
 	var response = struct {
@@ -137,6 +141,7 @@ type ListCalendarViewBookingAppointmentsConfig struct {
 	Start             time.Time
 	End               time.Time
 	Filter            *string
+	Select            *string
 }
 
 func (service *Service) ListCalendarViewBookingAppointments(cfg *ListCalendarViewBookingAppointmentsConfig) (*[]BookingAppointment, *errortools.Error) {
@@ -145,6 +150,9 @@ func (service *Service) ListCalendarViewBookingAppointments(cfg *ListCalendarVie
 	values.Set("end", cfg.End.Format(dateTimeLayout))
 	if cfg.Filter != nil {
 		values.Set("$filter", *cfg.Filter)
+	}
+	if cfg.Select != nil {
+		values.Set("$select", *cfg.Select)
 	}
 
 	var response = struct {
