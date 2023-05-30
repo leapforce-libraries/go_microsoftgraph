@@ -35,8 +35,12 @@ func (d *DateTimeString) UnmarshalJSON(b []byte) error {
 
 	_t, err := time.Parse(layout, s)
 	if err != nil {
-		_t, err = time.Parse(layout2, s)
-		if err != nil {
+		if len(s) >= len(layout2) {
+			_t, err = time.Parse(layout2, s[:len(layout2)])
+			if err != nil {
+				return returnError()
+			}
+		} else {
 			return returnError()
 		}
 	}
